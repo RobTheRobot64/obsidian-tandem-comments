@@ -362,6 +362,12 @@ export class CommentSidebar extends ItemView {
       meta.createSpan({ text: entry.author, cls: "tc-author" });
       meta.createSpan({ text: formatTs(entry.ts), cls: "tc-ts" });
       const textEl = row.createDiv({ cls: "tc-text" });
+      // Comment text can come from collaborators, sync, or AI assistants, so it
+      // is treated as untrusted. MarkdownRenderer.render sanitizes through
+      // Obsidian's own pipeline — the same sanitizer used for reading view
+      // (exposed as sanitizeHTMLToDom, backed by DOMPurify) — which strips
+      // <script>, on* event handlers, and unsafe URL schemes. We rely on that
+      // guarantee explicitly rather than adding a weaker post-render scrub.
       void MarkdownRenderer.render(this.app, entry.text, textEl, file.path, this);
     }
 

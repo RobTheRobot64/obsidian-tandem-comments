@@ -116,6 +116,22 @@ For Claude Code, **Settings → Export Claude skill** writes a ready-made skill 
 
 Inline comment markers break plain-text workflows: they show up in exports, confuse other tools, and make diffs noisy. Tandem Comments keeps annotations out of your prose entirely — the file remains a normal Markdown document that happens to carry its review thread with it.
 
+## Security
+
+Comment text can arrive from collaborators, sync, or AI assistants, so it is treated as untrusted. Comment bodies render as Markdown through Obsidian's own `MarkdownRenderer`, which sanitizes with the same engine Obsidian uses for reading view (exposed as `sanitizeHTMLToDom`, backed by DOMPurify). That engine blocks `<script>` and external scripts, strips `on*` event handlers, and neutralizes unsafe URL schemes (`javascript:`, `data:`, `vbscript:`). The plugin relies on this built-in guarantee rather than a separate post-render scrub, which would run too late to be a real boundary.
+
+The real sanitizer cannot run under the test harness (Node/Vitest has no Obsidian runtime), so sanitization is verified with a manual matrix in Obsidian:
+
+| Comment input | Expected result |
+|---|---|
+| `**bold**`, `_italic_` | Renders bold / italic |
+| `[link](https://example.com)` | Renders a clickable, safe link |
+| Paragraph, blank line, paragraph | Two paragraphs with compact spacing |
+| `<script>alert(1)</script>` | Not executed; script neutralized |
+| `<img src=x onerror=alert(1)>` | No alert; `onerror` stripped |
+| `[x](javascript:alert(1))` | Click does nothing; scheme neutralized |
+| `<a href="vbscript:…">`, `data:` URL | Neutralized |
+
 ## License
 
 [MIT](LICENSE)
