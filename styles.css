@@ -7,6 +7,11 @@
 }
 
 .tc-sidebar {
+  /* Saturation/lightness are fixed; only the hue varies per author, which keeps
+     every name legible against both light and dark backgrounds. Override these
+     two in a snippet to tune the palette globally. */
+  --tc-author-sat: 55%;
+  --tc-author-light: 60%;
   padding: 8px;
   overflow-y: auto;
 }
@@ -77,6 +82,10 @@
 .tc-author {
   font-weight: 600;
   color: var(--text-normal);
+}
+
+.tc-author[data-tc-hue] {
+  color: hsl(var(--tc-author-hue, 0) var(--tc-author-sat) var(--tc-author-light));
 }
 
 .tc-text {

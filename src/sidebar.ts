@@ -1,4 +1,5 @@
 import { ItemView, Notice, TFile, WorkspaceLeaf } from "obsidian";
+import { authorHue } from "./author-color";
 import { formatComment, formatTs } from "./export";
 import type CommentsPlugin from "./main";
 import {
@@ -24,6 +25,12 @@ interface Draft {
 
 function truncate(s: string, n: number): string {
   return s.length <= n ? s : s.slice(0, n - 1) + "…";
+}
+
+/** Colors an author name span by its stable hue. */
+function paintAuthor(el: HTMLElement, author: string): void {
+  el.style.setProperty("--tc-author-hue", String(authorHue(author)));
+  el.dataset.tcHue = "1";
 }
 
 function suggestionFailureMessage(reason: SuggestionFailureReason): string {
@@ -315,7 +322,7 @@ export class CommentSidebar extends ItemView {
         });
       }
       const meta = card.createDiv({ cls: "tc-meta" });
-      meta.createSpan({ text: suggestion.author, cls: "tc-author" });
+      paintAuthor(meta.createSpan({ text: suggestion.author, cls: "tc-author" }), suggestion.author);
       meta.createSpan({ text: formatTs(suggestion.ts), cls: "tc-ts" });
       const change = card.createDiv({ cls: "tc-suggestion-change" });
       const original = change.createDiv({ text: r.comment.anchor.exact, cls: "tc-suggestion-original" });
@@ -359,7 +366,7 @@ export class CommentSidebar extends ItemView {
     for (const entry of r.comment.thread) {
       const row = card.createDiv({ cls: "tc-entry" });
       const meta = row.createDiv({ cls: "tc-meta" });
-      meta.createSpan({ text: entry.author, cls: "tc-author" });
+      paintAuthor(meta.createSpan({ text: entry.author, cls: "tc-author" }), entry.author);
       meta.createSpan({ text: formatTs(entry.ts), cls: "tc-ts" });
       row.createDiv({ text: entry.text, cls: "tc-text" });
     }
