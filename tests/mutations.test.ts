@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { addComment, addReply, generateId, removeComment, resolveAll, setStatus } from "../src/store";
+import { addComment, addReply, editThreadEntry, generateId, removeComment, resolveAll, setStatus } from "../src/store";
 import type { CommentMap } from "../src/types";
 
 function sample(): CommentMap {
@@ -32,6 +32,30 @@ describe("mutations", () => {
 
   it("addReply throws for unknown id", () => {
     expect(() => addReply(sample(), "nope", "X", "ts", "t")).toThrow();
+  });
+
+  it("edits one thread entry without changing its metadata", () => {
+    const c = sample();
+    const original = { ...c.a1f3.thread[0] };
+
+    expect(editThreadEntry(c, "a1f3", 0, original, "Corrected text")).toEqual({ ok: true });
+    expect(c.a1f3.thread[0]).toEqual({
+      author: "Leon",
+      ts: "2026-06-10T00:00:00Z",
+      text: "Corrected text",
+    });
+  });
+
+  it("does not overwrite a thread entry that changed after editing began", () => {
+    const c = sample();
+    const original = { ...c.a1f3.thread[0] };
+    c.a1f3.thread[0].text = "Changed elsewhere";
+
+    expect(editThreadEntry(c, "a1f3", 0, original, "My edit")).toEqual({
+      ok: false,
+      reason: "conflict",
+    });
+    expect(c.a1f3.thread[0].text).toBe("Changed elsewhere");
   });
 
   it("setStatus flips status", () => {

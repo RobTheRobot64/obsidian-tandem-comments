@@ -87,6 +87,20 @@
   white-space: pre-wrap;
 }
 
+.tc-text-editable {
+  cursor: text;
+  border-radius: 4px;
+}
+
+.tc-text-editable:hover {
+  background: var(--background-modifier-hover);
+}
+
+.tc-text-editable:focus-visible {
+  outline: 2px solid var(--interactive-accent);
+  outline-offset: 2px;
+}
+
 .tc-field-label {
   margin-top: 8px;
   font-size: var(--font-ui-smaller);
@@ -176,6 +190,14 @@
   width: 100%;
   margin-top: 6px;
   resize: vertical;
+}
+
+.tc-edit-input {
+  min-height: 64px;
+}
+
+.tc-edit-actions {
+  justify-content: flex-end;
 }
 
 .tc-section {

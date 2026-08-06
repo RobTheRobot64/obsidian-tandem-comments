@@ -8,6 +8,7 @@ import type {
   ParsedDoc,
   ResolvedComment,
   SuggestionResult,
+  ThreadEntry,
 } from "./types";
 
 export const SCHEMA_HINT_LINES = [
@@ -195,6 +196,22 @@ export function addReply(comments: CommentMap, id: string, author: string, ts: s
   const c = comments[id];
   if (!c) throw new Error(`tandem-comments: unknown comment id "${id}"`);
   c.thread.push({ author, ts, text });
+}
+
+export function editThreadEntry(
+  comments: CommentMap,
+  id: string,
+  index: number,
+  expected: ThreadEntry,
+  text: string
+): { ok: true } | { ok: false; reason: "missing" | "conflict" } {
+  const entry = comments[id]?.thread[index];
+  if (!entry) return { ok: false, reason: "missing" };
+  if (entry.author !== expected.author || entry.ts !== expected.ts || entry.text !== expected.text) {
+    return { ok: false, reason: "conflict" };
+  }
+  entry.text = text;
+  return { ok: true };
 }
 
 export function setStatus(comments: CommentMap, id: string, status: CommentStatus): void {
