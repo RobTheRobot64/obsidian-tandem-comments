@@ -1,5 +1,5 @@
 import { ItemView, Notice, TFile, WorkspaceLeaf } from "obsidian";
-import { authorHue } from "./author-color";
+import { resolveAuthorColor, type AuthorColorOverrides } from "./author-color";
 import { formatComment, formatTs } from "./export";
 import type CommentsPlugin from "./main";
 import {
@@ -27,10 +27,12 @@ function truncate(s: string, n: number): string {
   return s.length <= n ? s : s.slice(0, n - 1) + "…";
 }
 
-/** Colors an author name span by its stable hue. */
-function paintAuthor(el: HTMLElement, author: string): void {
-  el.style.setProperty("--tc-author-hue", String(authorHue(author)));
-  el.dataset.tcHue = "1";
+/** Colors an author name span with accessible light and dark variants. */
+function paintAuthor(el: HTMLElement, author: string, overrides: AuthorColorOverrides): void {
+  el.style.setProperty("--tc-author-color-light", resolveAuthorColor(author, overrides, "light"));
+  el.style.setProperty("--tc-author-color-dark", resolveAuthorColor(author, overrides, "dark"));
+  el.dataset.tcAuthor = author;
+  el.addClass("tc-author-colored");
 }
 
 function suggestionFailureMessage(reason: SuggestionFailureReason): string {
@@ -106,6 +108,13 @@ export class CommentSidebar extends ItemView {
   toggleResolved(): void {
     this.showResolved = !this.showResolved;
     void this.render();
+  }
+
+  refreshAuthorColors(): void {
+    for (const el of Array.from(this.contentEl.querySelectorAll<HTMLElement>(".tc-author[data-tc-author]"))) {
+      const author = el.dataset.tcAuthor;
+      if (author != null) paintAuthor(el, author, this.plugin.settings.authorColorOverrides);
+    }
   }
 
   /** Nicht neu rendern, während in einem Eingabefeld getippter Text verloren ginge. */
@@ -322,7 +331,11 @@ export class CommentSidebar extends ItemView {
         });
       }
       const meta = card.createDiv({ cls: "tc-meta" });
-      paintAuthor(meta.createSpan({ text: suggestion.author, cls: "tc-author" }), suggestion.author);
+      paintAuthor(
+        meta.createSpan({ text: suggestion.author, cls: "tc-author" }),
+        suggestion.author,
+        this.plugin.settings.authorColorOverrides
+      );
       meta.createSpan({ text: formatTs(suggestion.ts), cls: "tc-ts" });
       const change = card.createDiv({ cls: "tc-suggestion-change" });
       const original = change.createDiv({ text: r.comment.anchor.exact, cls: "tc-suggestion-original" });
@@ -366,7 +379,11 @@ export class CommentSidebar extends ItemView {
     for (const entry of r.comment.thread) {
       const row = card.createDiv({ cls: "tc-entry" });
       const meta = row.createDiv({ cls: "tc-meta" });
-      paintAuthor(meta.createSpan({ text: entry.author, cls: "tc-author" }), entry.author);
+      paintAuthor(
+        meta.createSpan({ text: entry.author, cls: "tc-author" }),
+        entry.author,
+        this.plugin.settings.authorColorOverrides
+      );
       meta.createSpan({ text: formatTs(entry.ts), cls: "tc-ts" });
       row.createDiv({ text: entry.text, cls: "tc-text" });
     }

@@ -7,11 +7,6 @@
 }
 
 .tc-sidebar {
-  /* Saturation/lightness are fixed; only the hue varies per author, which keeps
-     every name legible against both light and dark backgrounds. Override these
-     two in a snippet to tune the palette globally. */
-  --tc-author-sat: 55%;
-  --tc-author-light: 60%;
   padding: 8px;
   overflow-y: auto;
 }
@@ -37,10 +32,6 @@
 
 .tc-card.tc-focused {
   border-color: var(--interactive-accent);
-}
-
-.tc-card.tc-resolved {
-  opacity: 0.65;
 }
 
 .tc-card.tc-orphan {
@@ -80,12 +71,16 @@
 }
 
 .tc-author {
-  font-weight: 600;
+  font-weight: 400;
   color: var(--text-normal);
 }
 
-.tc-author[data-tc-hue] {
-  color: hsl(var(--tc-author-hue, 0) var(--tc-author-sat) var(--tc-author-light));
+.tc-author-colored {
+  color: var(--tc-author-color-light);
+}
+
+.theme-dark .tc-author-colored {
+  color: var(--tc-author-color-dark);
 }
 
 .tc-text {
@@ -200,6 +195,67 @@
 
 .tc-error {
   color: var(--text-error);
+}
+
+.tc-setting-error {
+  color: var(--text-error);
+  margin-top: 4px;
+}
+
+.tc-author-colors-collapse {
+  margin: 14px 0;
+  border-top: 1px solid var(--background-modifier-border);
+  border-bottom: 1px solid var(--background-modifier-border);
+}
+
+.tc-author-colors-summary {
+  padding: 12px 0;
+  cursor: pointer;
+  touch-action: manipulation;
+  font-weight: 400;
+}
+
+.tc-author-colors-summary:hover {
+  color: var(--text-accent);
+}
+
+.tc-author-colors-summary:focus-visible {
+  outline: 2px solid var(--interactive-accent);
+  outline-offset: 2px;
+}
+
+.tc-author-colors-content {
+  padding: 0 0 8px 20px;
+}
+
+.tc-author-colors-description {
+  margin-bottom: 6px;
+  color: var(--text-muted);
+  font-size: var(--font-ui-smaller);
+}
+
+.tc-author-colors-list-title {
+  margin-top: 12px;
+  color: var(--text-muted);
+  font-size: var(--font-ui-smaller);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.tc-author-color-row .setting-item-info {
+  min-width: 0;
+}
+
+.tc-author-color-name {
+  width: min(220px, 100%);
+  font-weight: 500;
+}
+
+@media (max-width: 500px) {
+  .tc-author-colors-content {
+    padding-left: 0;
+  }
 }
 
 .tc-pill {
