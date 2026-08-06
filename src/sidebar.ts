@@ -6,6 +6,7 @@ import {
   addReply,
   addSuggestion,
   declineSuggestion,
+  editThreadEntry,
   generateId,
   removeComment,
   resolveAll,
@@ -103,7 +104,9 @@ export class CommentSidebar extends ItemView {
 
   /** Nicht neu rendern, während in einem Eingabefeld getippter Text verloren ginge. */
   private hasPendingInput(): boolean {
-    return Array.from(this.contentEl.querySelectorAll("textarea")).some((t) => t.value.length > 0);
+    return Array.from(this.contentEl.querySelectorAll("textarea")).some(
+      (t) => t.value.length > 0 || t.classList.contains("tc-edit-input")
+    );
   }
 
   async render(): Promise<void> {
@@ -356,12 +359,91 @@ export class CommentSidebar extends ItemView {
       }
     }
 
-    for (const entry of r.comment.thread) {
+    for (const [entryIndex, entry] of r.comment.thread.entries()) {
       const row = card.createDiv({ cls: "tc-entry" });
       const meta = row.createDiv({ cls: "tc-meta" });
       meta.createSpan({ text: entry.author, cls: "tc-author" });
       meta.createSpan({ text: formatTs(entry.ts), cls: "tc-ts" });
-      row.createDiv({ text: entry.text, cls: "tc-text" });
+      const textEl = row.createDiv({
+        text: entry.text,
+        cls: "tc-text tc-text-editable",
+        attr: {
+          tabindex: "0",
+          title: "Double-click to edit",
+          "aria-label": `Comment by ${entry.author}. Double-click or press Enter to edit.`,
+        },
+      });
+      const beginEdit = (): void => {
+        const expected = { ...entry };
+        const input = row.createEl("textarea", {
+          cls: "tc-input tc-edit-input",
+          attr: { rows: "3", "aria-label": `Edit comment by ${entry.author}` },
+        });
+        input.value = entry.text;
+        textEl.replaceWith(input);
+        const editActions = row.createDiv({ cls: "tc-actions tc-edit-actions" });
+        const save = editActions.createEl("button", { text: "Save", cls: "mod-cta" });
+        const cancel = editActions.createEl("button", { text: "Cancel" });
+
+        const submit = (): void => {
+          if (save.disabled) return;
+          const text = input.value.trim();
+          if (!text) {
+            new Notice("Comment cannot be empty.");
+            input.focus();
+            return;
+          }
+          if (text === expected.text) {
+            void this.render();
+            return;
+          }
+          save.disabled = true;
+          cancel.disabled = true;
+          let failure: "missing" | "conflict" | null = null;
+          void this.plugin
+            .updateDoc(file, (d) => {
+              const result = editThreadEntry(d.comments, r.id, entryIndex, expected, text);
+              if (!result.ok) failure = result.reason;
+            })
+            .then((ok) => {
+              if (!ok) {
+                save.disabled = false;
+                cancel.disabled = false;
+                return;
+              }
+              if (failure === "conflict") {
+                new Notice("This comment changed while you were editing it. Your edit was not saved.");
+              } else if (failure === "missing") {
+                new Notice("This comment no longer exists. Your edit was not saved.");
+              }
+              void this.render();
+            });
+        };
+
+        save.onclick = submit;
+        cancel.onclick = () => void this.render();
+        input.onkeydown = (e) => {
+          if (e.key === "Escape") {
+            e.preventDefault();
+            void this.render();
+          } else if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
+            e.preventDefault();
+            submit();
+          }
+        };
+        input.focus();
+        input.setSelectionRange(input.value.length, input.value.length);
+      };
+      textEl.ondblclick = (e) => {
+        e.preventDefault();
+        beginEdit();
+      };
+      textEl.onkeydown = (e) => {
+        if (e.key === "Enter" || e.key === "F2") {
+          e.preventDefault();
+          beginEdit();
+        }
+      };
     }
 
     const actions = card.createDiv({ cls: "tc-actions" });
