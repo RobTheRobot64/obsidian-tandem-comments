@@ -8,7 +8,8 @@ Quote-anchored comments and edit suggestions for [Obsidian](https://obsidian.md)
 
 - **Comment on any selection** — via command palette, hotkey, or right-click menu
 - **Suggest edits** — propose a replacement for selected text, then accept or decline it from the sidebar
-- **Sidebar threads** — reply, resolve, reopen, delete, re-anchor orphaned comments
+- **Sidebar threads:** reply, edit, resolve, reopen, delete, and re-anchor orphaned comments
+- **Per-author colors:** distinguish participants automatically, with optional exact color overrides in settings
 - **Live highlights** in the editor; click a highlight to jump to its thread
 - **Live re-anchoring** — comments follow your text as you edit; if an anchor's text disappears, the comment becomes *orphaned* and can be re-attached to a new selection
 - **Resolve = remove** by default, keeping files clean (history mode available in settings)
@@ -118,11 +119,11 @@ Inline comment markers break plain-text workflows: they show up in exports, conf
 
 ## Security
 
-Comment text can arrive from collaborators, sync, or AI assistants, so it is treated as untrusted. Comment bodies render as Markdown through Obsidian's own `MarkdownRenderer`, which sanitizes with the same engine Obsidian uses for reading view (exposed as `sanitizeHTMLToDom`, backed by DOMPurify). That engine blocks `<script>` and external scripts, strips `on*` event handlers, and neutralizes unsafe URL schemes (`javascript:`, `data:`, `vbscript:`). The plugin relies on this built-in guarantee rather than a separate post-render scrub, which would run too late to be a real boundary.
+Comment bodies are rendered with Obsidian's Markdown renderer and inherit its supported syntax, sanitization, and plugin post-processor behavior. Tandem Comments does not add a separate post-render HTML sanitizer.
 
-The real sanitizer cannot run under the test harness (Node/Vitest has no Obsidian runtime), so sanitization is verified with a manual matrix in Obsidian:
+The real sanitizer cannot run under the test harness (Node/Vitest has no Obsidian runtime). The following smoke-test matrix was verified manually with Obsidian 1.12.4:
 
-| Comment input | Expected result |
+| Comment input | Observed result |
 |---|---|
 | `**bold**`, `_italic_` | Renders bold / italic |
 | `[link](https://example.com)` | Renders a clickable, safe link |
